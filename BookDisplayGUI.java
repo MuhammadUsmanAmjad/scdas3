@@ -234,5 +234,88 @@ public class BookDisplayGUI {
         // Add the buttonPanel to the mainFrame at the top (North) position
         mainFrame.add(buttonPanel, BorderLayout.SOUTH); // Place the buttons at the Bottom
     }
+    
+    
+       private class AddButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Create an input dialog to get book details
+            String title = JOptionPane.showInputDialog(mainFrame, "Enter Title:");
+            String author = JOptionPane.showInputDialog(mainFrame, "Enter Author:");
+            String publishDate = JOptionPane.showInputDialog(mainFrame, "Enter Publication Date:");
+            String content = JOptionPane.showInputDialog(mainFrame, "Enter Content:");
+            String popularityCount = JOptionPane.showInputDialog(mainFrame, "Enter Popularity Count:");
+            int popularityCount1 = Integer.parseInt(popularityCount);
+
+            // Check if the user canceled the input
+            if (title != null && author != null && publishDate != null && content != null) {
+                Book newBook = new Book(title, author, publishDate, content, popularityCount1);
+                // Add the new book to the list of books
+                books.add(newBook);
+                writetofile();
+                // Update the table to reflect the changes
+                updateTable(); // Call this to update the table
+            }
+        }
+    }
+
+    private class EditButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String title = JOptionPane.showInputDialog(mainFrame, "Enter Title to Edit:");
+            if (title != null) {
+                Book bookToEdit = searchBookByTitle(title);
+                if (bookToEdit != null) {
+                    // Create input dialogs to edit book details
+                    String newTitle = JOptionPane.showInputDialog(mainFrame, "Edit Title:", bookToEdit.getTitle());
+                    String author = JOptionPane.showInputDialog(mainFrame, "Edit Author:", bookToEdit.getAuthor());
+                    String publishDate = JOptionPane.showInputDialog(mainFrame, "Edit Publication Date:",
+                            bookToEdit.getPublishDate());
+                    String content = JOptionPane.showInputDialog(mainFrame, "Edit Content:", bookToEdit.getContent());
+                    String popularityCount = JOptionPane.showInputDialog(mainFrame, "Edit Popularity Count:",
+                            bookToEdit.getPopularityCount());
+                    int popularityCount1 = Integer.parseInt(popularityCount);
+                    // Check if the user canceled the input
+                    if (newTitle != null && author != null && publishDate != null && content != null
+                            && popularityCount1 != 0) {
+                        // Update the book's details
+                        bookToEdit.setTitle(newTitle);
+                        bookToEdit.setAuthor(author);
+                        bookToEdit.setPublishDate(publishDate);
+                        bookToEdit.setContent(content);
+                        bookToEdit.setPopularityCount(popularityCount1);
+                        writetofile();
+                        // Update the table to reflect the changes
+                        updateTable();
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(mainFrame, "Book not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+
+    private class DeleteButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String title = JOptionPane.showInputDialog(mainFrame, "Enter Title to Delete:");
+            if (title != null) {
+                Book bookToDelete = searchBookByTitle(title);
+                if (bookToDelete != null) {
+                    // Remove the book from the list
+                    File file = new File(bookToDelete.getContentFileName());
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    books.remove(bookToDelete);
+                    writetofile();
+                    // Update the table to reflect the changes
+                    updateTable();
+                } else {
+                    JOptionPane.showMessageDialog(mainFrame, "Book not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
         }
 
