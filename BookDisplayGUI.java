@@ -11,6 +11,14 @@ import java.util.Collections;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import java.awt.event.MouseAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+
 class Book {
     private String title;
     private String author;
@@ -76,6 +84,7 @@ class Book {
         return this.contentFileName;
     }
 }
+
 public class BookDisplayGUI {
     private JFrame mainFrame;
     private JTable bookTable;
@@ -87,7 +96,7 @@ public class BookDisplayGUI {
     // private String Filename;
     List<Book> books = new ArrayList<>();
 
-   public BookDisplayGUI() {
+    public BookDisplayGUI() {
         ReadBooksFromFile(books);
         mainFrame = new JFrame("Book Display");
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -105,7 +114,56 @@ public class BookDisplayGUI {
             data[i][2] = book.getPublishDate();
             data[i][3] = "Read"; // Placeholder for button
         }
-        }
+
+        DefaultTableModel model = new DefaultTableModel(data, columnNames) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Make all cells non-editable
+            }
+        };
+        bookTable = new JTable(model) {
+            @Override
+            public Class<?> getColumnClass(int column) {
+                if (column == 3) {
+                    return getValueAt(0, column).getClass();
+                }
+                return super.getColumnClass(column);
+            }
+        };
+
+        bookTable.getColumnModel().getColumn(3).setCellRenderer(new ButtonRenderer());
+        bookTable.getColumnModel().getColumn(3).setCellEditor(new ButtonEditor(new JCheckBox()));
+        bookTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                int row = bookTable.rowAtPoint(e.getPoint());
+                if (row >= 0) {
+                    bookTable.setSelectionBackground(Color.RED);
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                bookTable.setSelectionBackground(bookTable.getBackground());
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(bookTable);
+        mainFrame.add(scrollPane);
+
+        bookTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        bookTable.getSelectionModel().addListSelectionListener(e -> {
+            int selectedRow = bookTable.getSelectedRow();
+            if (selectedRow >= 0) {
+                String content = books.get(selectedRow).getContent();
+                showBookContent(content);
+            }
+        });
+
+        mainFrame.setVisible(true);
+
+    }
 
             private void ReadBooksFromFile(List<Book> books) {
         try (BufferedReader reader = new BufferedReader(new FileReader("book_data.txt"))) {
