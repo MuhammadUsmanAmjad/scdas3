@@ -1,3 +1,16 @@
+import javax.swing.*;
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 class Book {
     private String title;
     private String author;
@@ -74,9 +87,26 @@ public class BookDisplayGUI {
     // private String Filename;
     List<Book> books = new ArrayList<>();
 
-    public BookDisplayGUI() {
+   public BookDisplayGUI() {
         ReadBooksFromFile(books);
+        mainFrame = new JFrame("Book Display");
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setSize(800, 400);
+
+        createButtons();
+
+        String[] columnNames = { "Title", "Author", "Publication Date", "Read" };
+        Object[][] data = new Object[books.size()][4];
+
+        for (int i = 0; i < books.size(); i++) {
+            Book book = books.get(i);
+            data[i][0] = book.getTitle();
+            data[i][1] = book.getAuthor();
+            data[i][2] = book.getPublishDate();
+            data[i][3] = "Read"; // Placeholder for button
         }
+        }
+
             private void ReadBooksFromFile(List<Book> books) {
         try (BufferedReader reader = new BufferedReader(new FileReader("book_data.txt"))) {
             String line;
@@ -121,6 +151,30 @@ public class BookDisplayGUI {
 
             new BookDisplayGUI();
         });
+    }
+ private void createButtons() {
+        // Create a JPanel for the buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout()); // Buttons will be horizontally aligned
+
+        addButton = new JButton("Add");
+        editButton = new JButton("Edit");
+        deleteButton = new JButton("Delete");
+        popularityButton = new JButton("Popularity Graph");
+
+        // Add action listeners to the buttons
+        addButton.addActionListener(new AddButtonActionListener());
+        editButton.addActionListener(new EditButtonActionListener());
+        deleteButton.addActionListener(new DeleteButtonActionListener());
+        popularityButton.addActionListener(new PopularityButtonActionListener()); // Update the action listener
+
+        // Add buttons to the buttonPanel
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(popularityButton); // Add the "Popularity Graph" button
+
+        // Add the buttonPanel to the mainFrame at the top (North) position
+        mainFrame.add(buttonPanel, BorderLayout.SOUTH); // Place the buttons at the Bottom
     }
 
         
