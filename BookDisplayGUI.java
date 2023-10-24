@@ -234,7 +234,5 @@ public class BookDisplayGUI {
         // Add the buttonPanel to the mainFrame at the top (North) position
         mainFrame.add(buttonPanel, BorderLayout.SOUTH); // Place the buttons at the Bottom
     }
-
-        
         }
 
