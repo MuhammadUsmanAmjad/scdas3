@@ -165,52 +165,7 @@ public class BookDisplayGUI {
 
     }
 
-            private void ReadBooksFromFile(List<Book> books) {
-        try (BufferedReader reader = new BufferedReader(new FileReader("book_data.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] bookData = line.split(",");
-                if (bookData.length == 5) { // Assuming popularity count is the fourth element
-                    String title = bookData[0].trim();
-                    String author = bookData[1].trim();
-                    String publishDate = bookData[2].trim();
-                    int popularityCount = Integer.parseInt(bookData[3].trim());
-                    String contentFileName = bookData[4].trim();
-
-                    // Read content from the file
-                    String content = readContentFromFile(contentFileName);
-
-                    Book book = new Book(title, author, publishDate, content, popularityCount);
-                    book.setContentFileName(contentFileName);
-                    books.add(book);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Method to read content from a file
-    private String readContentFromFile(String fileName) {
-        StringBuilder content = new StringBuilder();
-        try (BufferedReader contentReader = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = contentReader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return content.toString();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-
-            new BookDisplayGUI();
-        });
-    }
- private void createButtons() {
+    private void createButtons() {
         // Create a JPanel for the buttons
         JPanel buttonPanel = new JPanel(new FlowLayout()); // Buttons will be horizontally aligned
 
@@ -234,9 +189,142 @@ public class BookDisplayGUI {
         // Add the buttonPanel to the mainFrame at the top (North) position
         mainFrame.add(buttonPanel, BorderLayout.SOUTH); // Place the buttons at the Bottom
     }
-    
-    
-       private class AddButtonActionListener implements ActionListener {
+
+    private void showBookContent(String content) {
+        if (contentFrame == null) {
+            contentFrame = new JFrame("Book Content");
+            contentFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            // Add a window listener to handle window closing
+            contentFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    int result = JOptionPane.showConfirmDialog(contentFrame, "Do you want to exit?", "Confirm Exit",
+                            JOptionPane.YES_NO_OPTION);
+                    if (result == JOptionPane.YES_OPTION) {
+                        contentFrame.dispose(); // Close the content frame if the user confirms
+                    }
+                }
+            });
+
+            contentFrame.setSize(600, 400);
+
+            JTextArea contentTextArea = new JTextArea(content);
+            contentTextArea.setEditable(false);
+
+            JScrollPane contentScrollPane = new JScrollPane(contentTextArea);
+            contentFrame.add(contentScrollPane);
+
+            contentFrame.setVisible(true);
+        } else {
+            // If the contentFrame is already open, just update the content
+            JTextArea contentTextArea = (JTextArea) ((JScrollPane) contentFrame.getContentPane().getComponent(0))
+                    .getViewport().getView();
+            contentTextArea.setText(content);
+            contentFrame.setVisible(true);
+        }
+    }
+
+    private void drawBarGraph(Graphics g, List<Book> topBooks) {
+        int x = 50; // Starting X-coordinate
+        int y = 300; // Starting Y-coordinate
+        int barWidth = 50; // Width of each bar
+
+        // Maximum popularity count to scale the graph
+        int maxPopularity = topBooks.get(0).getPopularityCount();
+
+        // Draw the bars
+        for (Book book : topBooks) {
+            int popularity = book.getPopularityCount();
+            int barHeight = (int) (popularity * 300.0 / maxPopularity); // Scale to fit the graph
+
+            g.setColor(Color.BLUE);
+            g.fillRect(x, y - barHeight, barWidth, barHeight);
+
+            g.setColor(Color.BLACK);
+            g.drawRect(x, y - barHeight, barWidth, barHeight);
+
+            // Display the book title below the bar
+            g.setFont(new Font("Arial", Font.PLAIN, 12));
+            g.drawString(book.getTitle(), x, y + 20);
+
+            x += 100; // Adjust the X-coordinate for the next bar
+        }
+    }
+
+    private void createPopularityGraph() {
+        JFrame graphFrame = new JFrame("Popularity Count Bar Graph");
+        graphFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        graphFrame.setSize(600, 400);
+
+        // Sort books by popularity count in descending order
+        Collections.sort(books, (b1, b2) -> Integer.compare(b2.getPopularityCount(), b1.getPopularityCount()));
+
+        // Take the top 3 books (most popular)
+        List<Book> topBooks = books.subList(0, Math.min(3, books.size()));
+
+        JPanel graphPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                drawBarGraph(g, topBooks);
+            }
+        };
+
+        graphFrame.add(graphPanel);
+        graphFrame.setVisible(true);
+    }
+
+    private Book searchBookByTitle(String title) {
+        for (Book book : books) {
+            if (book.getTitle().equalsIgnoreCase(title)) {
+                return book;
+            }
+        }
+        return null;
+    }
+
+    private void updateTable() {
+        DefaultTableModel model = (DefaultTableModel) bookTable.getModel();
+        model.setRowCount(0); // Clear the table
+
+        for (Book book : books) {
+            String title = book.getTitle();
+            String author = book.getAuthor();
+            String publishDate = book.getPublishDate();
+
+            JButton readButton = new JButton("Read");
+
+            // Set the action for the "Read" button
+            readButton.addActionListener(e -> {
+                int row = bookTable.getSelectedRow();
+                if (row >= 0) {
+                    String content = books.get(row).getContent();
+                    showBookContent(content);
+                }
+            });
+
+            // Set the button as the cell value for the "Read" column
+            model.addRow(new Object[] { title, author, publishDate, readButton });
+        }
+
+        // After updating the table model, you can reset the cell editor and renderer
+        // for the "Read" column
+        bookTable.getColumnModel().getColumn(3).setCellRenderer(new ButtonRenderer());
+        bookTable.getColumnModel().getColumn(3).setCellEditor(new ButtonEditor(new JCheckBox()));
+        bookTable.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int row = bookTable.rowAtPoint(e.getPoint());
+                if (row >= 0) {
+                    bookTable.setRowSelectionInterval(row, row);
+                }
+            }
+        });
+
+    }
+
+    private class AddButtonActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             // Create an input dialog to get book details
@@ -317,5 +405,143 @@ public class BookDisplayGUI {
             }
         }
     }
+
+    private void writetofile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("book_data.txt"))) {
+            for (Book book : books) {
+                writer.write(book.getTitle() + "," + book.getAuthor() + "," + book.getPublishDate() + ","
+                        + book.getPopularityCount() + "," + book.getContentFileName());
+                writer.newLine();
+
+                // Write content to the specified file
+                try (BufferedWriter contentWriter = new BufferedWriter(new FileWriter(book.getContentFileName()))) {
+                    contentWriter.write(book.getContent());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        books.clear();
+        ReadBooksFromFile(books);
+    }
+
+    private class PopularityButtonActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            createPopularityGraph();
+        }
+    }
+
+    class ReadAction extends AbstractAction {
+        private String content;
+
+        public ReadAction(String content) {
+            super("Read");
+            this.content = content;
         }
 
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            showBookContent(content);
+        }
+    }
+
+    private class ButtonEditor extends DefaultCellEditor {
+        protected JButton button;
+
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton();
+            button.setOpaque(true); // Fix the button appearance
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+                int column) {
+            if (isSelected) {
+                button.setForeground(table.getSelectionForeground());
+                button.setBackground(table.getSelectionBackground());
+            } else {
+                button.setForeground(table.getForeground());
+                button.setBackground(table.getBackground());
+            }
+            button.setText("Read");
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            return "Read";
+        }
+    }
+
+    private class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
+            // Set the default text for the button
+            setText("READ");
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                int row, int column) {
+            if (isSelected) {
+                setForeground(table.getSelectionForeground());
+                setBackground(table.getSelectionBackground());
+            } else {
+                setForeground(table.getForeground());
+                setBackground(table.getBackground());
+            }
+
+            // Display the text "READ" for the button
+            return this;
+        }
+    }
+
+    private void ReadBooksFromFile(List<Book> books) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("book_data.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] bookData = line.split(",");
+                if (bookData.length == 5) { // Assuming popularity count is the fourth element
+                    String title = bookData[0].trim();
+                    String author = bookData[1].trim();
+                    String publishDate = bookData[2].trim();
+                    int popularityCount = Integer.parseInt(bookData[3].trim());
+                    String contentFileName = bookData[4].trim();
+
+                    // Read content from the file
+                    String content = readContentFromFile(contentFileName);
+
+                    Book book = new Book(title, author, publishDate, content, popularityCount);
+                    book.setContentFileName(contentFileName);
+                    books.add(book);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to read content from a file
+    private String readContentFromFile(String fileName) {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader contentReader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = contentReader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return content.toString();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+
+            new BookDisplayGUI();
+        });
+    }
+
+}
