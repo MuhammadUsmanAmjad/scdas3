@@ -1,0 +1,3 @@
+**Book 7 (Ruby)**
+"Ruby Programming: Ruby Programming Guide" by Laura Brown
+Published in 2009, this book delves into the depths of Ruby programming, covering 14 chapters. It's a must-read for Ruby enthusiasts.

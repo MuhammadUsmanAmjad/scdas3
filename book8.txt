@@ -1,0 +1,3 @@
+**Book 8 (JavaScript)**
+"JavaScript Programming: JavaScript Programming Guide" by Robert Jones
+Published in 2011, this book delves into the depths of JavaScript programming, covering 20 chapters. It's a must-read for JavaScript enthusiasts.

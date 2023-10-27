@@ -1,0 +1,3 @@
+**Book 3 (Python)**
+"Python Programming: Python Programming Guide" by Emma Johnson
+Published in 2010, this book delves into the depths of Python programming, covering 15 chapters. It's a must-read for Python enthusiasts.

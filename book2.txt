@@ -1,0 +1,3 @@
+**Book 2 (PHP)**
+"PHP Programming: PHP Programming Guide" by John Smith
+Published in 2001, this book delves into the depths of PHP programming, covering 22 chapters. It's a must-read for PHP enthusiasts.
